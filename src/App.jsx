@@ -209,142 +209,251 @@ function LevelButton({ lv, index, saved, onClick, disabled }) {
 }
 
 function WelcomeScreen({ onStart, onStartDiagnostic, onStartHsk, onStartHskDiagnostic }) {
+  const [selectedTrack, setSelectedTrack] = useState(null); // null | "estc" | "hsk"
   const savedResults = loadResults();
 
-  return (
-    <div style={{ minHeight: "100vh", background: C.ink, display: "flex", flexDirection: "column" }}>
-      {/* Hero */}
-      <div style={{
-        background: `linear-gradient(170deg, ${C.inkDeep} 0%, ${C.inkLight} 100%)`,
-        padding: "48px 24px 36px", textAlign: "center",
-        borderBottom: `1px solid ${C.gold}30`,
-      }}>
-        <div style={{
-          fontSize: 52, fontWeight: 300, letterSpacing: 10,
-          color: C.paper, marginBottom: 8,
-          fontFamily: "'Noto Serif SC', serif",
-        }}>
-          中文水平测试
-        </div>
-        <div style={{
-          fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14,
-          letterSpacing: 4, textTransform: "uppercase",
-          color: C.goldSoft, marginBottom: 6,
-        }}>
-          Mandarin Placement Test
-        </div>
-        <div style={{
-          fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12,
-          color: C.grey, letterSpacing: 1,
-        }}>
-          by Mandarin Project
+  const Hero = () => (
+    <div style={{
+      background: `linear-gradient(170deg, ${C.inkDeep} 0%, ${C.inkLight} 100%)`,
+      padding: "48px 24px 36px", textAlign: "center",
+      borderBottom: `1px solid ${C.gold}30`,
+    }}>
+      <div style={{ fontSize: 52, fontWeight: 300, letterSpacing: 10, color: C.paper, marginBottom: 8, fontFamily: "'Noto Serif SC', serif" }}>
+        中文水平测试
+      </div>
+      <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14, letterSpacing: 4, textTransform: "uppercase", color: C.goldSoft, marginBottom: 6 }}>
+        Mandarin Placement Test
+      </div>
+      <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.grey, letterSpacing: 1 }}>
+        by Mandarin Project
+      </div>
+    </div>
+  );
+
+  const Footer = () => (
+    <div style={{ marginTop: 40, textAlign: "center", fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.grey, letterSpacing: 1 }}>
+      © Mandarin Project — Placement Test v1.0
+    </div>
+  );
+
+  const BackBtn = () => (
+    <button
+      onClick={() => setSelectedTrack(null)}
+      style={{
+        background: "none", border: "none", cursor: "pointer",
+        color: C.grey, fontFamily: "'Helvetica Neue', sans-serif",
+        fontSize: 13, padding: "0 0 20px", display: "flex", alignItems: "center", gap: 6,
+      }}
+    >
+      ← Back to tracks
+    </button>
+  );
+
+  // ── ESTC levels view ───────────────────────────────────────────────────────
+  if (selectedTrack === "estc") {
+    return (
+      <div style={{ minHeight: "100vh", background: C.ink, display: "flex", flexDirection: "column" }}>
+        <Hero />
+        <div style={{ flex: 1, padding: "24px 20px 32px", maxWidth: 480, margin: "0 auto", width: "100%" }}>
+          <BackBtn />
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, textTransform: "uppercase", letterSpacing: 2, color: C.jadeSoft, marginBottom: 3 }}>
+            📗 Easy Steps to Chinese (ESTC)
+          </div>
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.grey, marginBottom: 16 }}>
+            Based on Easy Steps to Chinese textbook series
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+            {LEVEL_META.map((lv, i) => (
+              <LevelButton key={lv.id} lv={lv} index={i} saved={savedResults[lv.id]} onClick={onStart} />
+            ))}
+          </div>
+          <Card style={{ background: C.inkLight, border: `1px solid ${C.jadeSoft}20`, marginBottom: 24 }}>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, color: C.grey, marginBottom: 12, lineHeight: 1.6 }}>
+              Don't know your level? Run the full ESTC diagnostic — it advances through each book automatically.
+            </div>
+            <button
+              onClick={onStartDiagnostic}
+              style={{
+                width: "100%", padding: "13px 16px", borderRadius: 10,
+                border: `1.5px solid ${C.jadeSoft}40`, background: C.jade + "18",
+                color: C.jadeSoft, cursor: "pointer",
+                fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14, fontWeight: 600,
+              }}
+            >
+              Start ESTC Diagnostic →
+            </button>
+          </Card>
+          <Footer />
         </div>
       </div>
+    );
+  }
 
-      {/* Body */}
+  // ── HSK levels view ────────────────────────────────────────────────────────
+  if (selectedTrack === "hsk") {
+    return (
+      <div style={{ minHeight: "100vh", background: C.ink, display: "flex", flexDirection: "column" }}>
+        <Hero />
+        <div style={{ flex: 1, padding: "24px 20px 32px", maxWidth: 480, margin: "0 auto", width: "100%" }}>
+          <BackBtn />
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, textTransform: "uppercase", letterSpacing: 2, color: "#818cf8", marginBottom: 3 }}>
+            📋 HSK 2.0 Exam Preparation
+          </div>
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.grey, marginBottom: 16 }}>
+            Official Chinese Proficiency Test prep · Independent study path
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 24 }}>
+            {HSK_LEVEL_META.map((lv, i) => (
+              <LevelButton key={lv.id} lv={lv} index={i} saved={savedResults[lv.id]} onClick={onStartHsk} disabled={lv.comingSoon} />
+            ))}
+          </div>
+          <Card style={{ background: C.inkLight, border: "1px solid #4f46e520", marginBottom: 24 }}>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, color: C.grey, marginBottom: 12, lineHeight: 1.6 }}>
+              Not sure of your HSK level? Run the HSK diagnostic — it progresses from HSK 1 through HSK 4 automatically.
+            </div>
+            <button
+              onClick={onStartHskDiagnostic}
+              style={{
+                width: "100%", padding: "13px 16px", borderRadius: 10,
+                border: "1.5px solid #4f46e540", background: "#4f46e518",
+                color: "#818cf8", cursor: "pointer",
+                fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14, fontWeight: 600,
+              }}
+            >
+              Start HSK Diagnostic →
+            </button>
+          </Card>
+          <Footer />
+        </div>
+      </div>
+    );
+  }
+
+  // ── Track selection (default) ──────────────────────────────────────────────
+  return (
+    <div style={{ minHeight: "100vh", background: C.ink, display: "flex", flexDirection: "column" }}>
+      <Hero />
       <div style={{ flex: 1, padding: "24px 20px 32px", maxWidth: 480, margin: "0 auto", width: "100%" }}>
 
-        {/* Intro text */}
-        <p style={{
-          fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14,
-          color: C.dim, textAlign: "center", marginBottom: 28, lineHeight: 1.7,
-        }}>
-          Find out your Mandarin level. Choose a track and test below, or run a full diagnostic.
+        <p style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14, color: C.dim, textAlign: "center", marginBottom: 8, lineHeight: 1.7 }}>
+          Find out your Mandarin level.
         </p>
+        <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, textTransform: "uppercase", letterSpacing: 2, color: C.grey, marginBottom: 16, textAlign: "center" }}>
+          Choose Your Exam Track
+        </div>
 
-        {/* Full Diagnostic card — two track options */}
-        <Card style={{ background: C.inkLight, border: `1px solid ${C.gold}30`, marginBottom: 28 }}>
-          <div style={{ fontFamily: "'Noto Serif SC', serif", fontSize: 20, color: C.paper, marginBottom: 4 }}>
+        {/* Track cards */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 28 }}>
+
+          {/* ESTC Card */}
+          <button
+            onClick={() => setSelectedTrack("estc")}
+            style={{
+              background: C.inkLight, border: `1.5px solid ${C.jadeSoft}28`,
+              borderRadius: 14, padding: "20px 20px 18px",
+              textAlign: "left", cursor: "pointer",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
+              <div style={{ width: 50, height: 50, borderRadius: 12, background: C.jade + "22", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>
+                📗
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 17, fontWeight: 700, color: C.paper, marginBottom: 2 }}>
+                  Easy Steps to Chinese
+                </div>
+                <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.jadeSoft }}>
+                  ESTC Track · 6 levels
+                </div>
+              </div>
+            </div>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, color: C.grey, lineHeight: 1.6, marginBottom: 12 }}>
+              Based on the Easy Steps to Chinese textbook series. Ideal if you're studying with Mandarin Project classes.
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {["Intro", "Book 1", "Book 2", "Book 3", "Book 4", "Book 5"].map(tag => (
+                <span key={tag} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 4, background: C.jade + "18", color: C.jadeSoft, fontFamily: "'Helvetica Neue', sans-serif" }}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </button>
+
+          {/* HSK Card */}
+          <button
+            onClick={() => setSelectedTrack("hsk")}
+            style={{
+              background: C.inkLight, border: "1.5px solid #4f46e528",
+              borderRadius: 14, padding: "20px 20px 18px",
+              textAlign: "left", cursor: "pointer",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 10 }}>
+              <div style={{ width: 50, height: 50, borderRadius: 12, background: "#4f46e522", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 26, flexShrink: 0 }}>
+                📋
+              </div>
+              <div>
+                <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 17, fontWeight: 700, color: C.paper, marginBottom: 2 }}>
+                  HSK 2.0
+                </div>
+                <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: "#818cf8" }}>
+                  HSK Track · HSK 1–4 active
+                </div>
+              </div>
+            </div>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, color: C.grey, lineHeight: 1.6, marginBottom: 12 }}>
+              Official Chinese Proficiency Test preparation. Covers HSK 1–4 vocabulary and grammar structures.
+            </div>
+            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              {["HSK 1", "HSK 2", "HSK 3", "HSK 4"].map(tag => (
+                <span key={tag} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 4, background: "#4f46e518", color: "#818cf8", fontFamily: "'Helvetica Neue', sans-serif" }}>
+                  {tag}
+                </span>
+              ))}
+              {["HSK 5", "HSK 6"].map(tag => (
+                <span key={tag} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 4, background: C.inkDeep, color: C.grey, fontFamily: "'Helvetica Neue', sans-serif" }}>
+                  {tag} soon
+                </span>
+              ))}
+            </div>
+          </button>
+        </div>
+
+        {/* Full Diagnostic */}
+        <Card style={{ background: C.inkLight, border: `1px solid ${C.gold}30`, marginBottom: 24 }}>
+          <div style={{ fontFamily: "'Noto Serif SC', serif", fontSize: 18, color: C.paper, marginBottom: 4 }}>
             Full Diagnostic
           </div>
-          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, color: C.grey, marginBottom: 16, lineHeight: 1.6 }}>
-            Progress through each level automatically. Stops when you reach your ceiling. Choose your track:
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, color: C.grey, marginBottom: 14, lineHeight: 1.6 }}>
+            Progress through all levels automatically. Stops at your ceiling. Choose a track:
           </div>
           <div style={{ display: "flex", gap: 10 }}>
             <button
               onClick={onStartDiagnostic}
               style={{
-                flex: 1, padding: "12px 10px", borderRadius: 10, border: `1.5px solid ${C.jadeSoft}40`,
-                background: C.jade + "18", color: C.jadeSoft, cursor: "pointer",
+                flex: 1, padding: "12px 10px", borderRadius: 10,
+                border: `1.5px solid ${C.jadeSoft}40`, background: C.jade + "18",
+                color: C.jadeSoft, cursor: "pointer",
                 fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, fontWeight: 600,
               }}
             >
-              📚 ESTC Track
+              📗 ESTC
             </button>
             <button
               onClick={onStartHskDiagnostic}
               style={{
-                flex: 1, padding: "12px 10px", borderRadius: 10, border: `1.5px solid #4f46e540`,
-                background: "#4f46e518", color: "#818cf8", cursor: "pointer",
+                flex: 1, padding: "12px 10px", borderRadius: 10,
+                border: "1.5px solid #4f46e540", background: "#4f46e518",
+                color: "#818cf8", cursor: "pointer",
                 fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, fontWeight: 600,
               }}
             >
-              📋 HSK Track
+              📋 HSK
             </button>
           </div>
         </Card>
 
-        {/* ── ESTC Section ── */}
-        <div style={{
-          fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11,
-          textTransform: "uppercase", letterSpacing: 2, color: C.jadeSoft,
-          marginBottom: 12,
-        }}>
-          📚 Easy Steps to Chinese (ESTC)
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
-          {LEVEL_META.map((lv, i) => (
-            <LevelButton key={lv.id} lv={lv} index={i} saved={savedResults[lv.id]} onClick={onStart} />
-          ))}
-        </div>
-
-        {/* Section Divider */}
-        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0 24px" }}>
-          <div style={{ flex: 1, height: 1, background: C.inkLight }} />
-          <div style={{
-            fontFamily: "'Helvetica Neue', sans-serif", fontSize: 10,
-            textTransform: "uppercase", letterSpacing: 2, color: C.grey,
-          }}>
-            Parallel Track
-          </div>
-          <div style={{ flex: 1, height: 1, background: C.inkLight }} />
-        </div>
-
-        {/* ── HSK Section ── */}
-        <div style={{
-          fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11,
-          textTransform: "uppercase", letterSpacing: 2, color: "#818cf8",
-          marginBottom: 4,
-        }}>
-          📋 HSK 2.0 Exam Preparation
-        </div>
-        <div style={{
-          fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12,
-          color: C.grey, marginBottom: 12,
-        }}>
-          Independent study path · Test your HSK exam readiness
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {HSK_LEVEL_META.map((lv, i) => (
-            <LevelButton
-              key={lv.id} lv={lv} index={i}
-              saved={savedResults[lv.id]}
-              onClick={onStartHsk}
-              disabled={lv.comingSoon}
-            />
-          ))}
-        </div>
-
-        {/* Branding footer */}
-        <div style={{
-          marginTop: 40, textAlign: "center",
-          fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11,
-          color: C.grey, letterSpacing: 1,
-        }}>
-          © Mandarin Project — Placement Test v1.0
-        </div>
+        <Footer />
       </div>
     </div>
   );
@@ -724,7 +833,7 @@ function DiagnosticSummaryScreen({ history, onRetry, onHome, isHsk }) {
       <div style={{
         background: `linear-gradient(170deg, ${C.inkDeep} 0%, ${C.inkLight} 100%)`,
         padding: "40px 24px 32px", textAlign: "center",
-        borderBottom: `1px solid ${C.gold}30`,
+        borderBottom: `1px solid ${isHsk ? "#4f46e530" : C.gold + "30"}`,
       }}>
         <div style={{ fontSize: 36, marginBottom: 8 }}>📊</div>
         <div style={{
@@ -736,9 +845,9 @@ function DiagnosticSummaryScreen({ history, onRetry, onHome, isHsk }) {
         <div style={{
           fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13,
           letterSpacing: 2, textTransform: "uppercase",
-          color: C.goldSoft,
+          color: isHsk ? "#818cf8" : C.goldSoft,
         }}>
-          Diagnostic Results
+          {isHsk ? "HSK Track · Diagnostic Results" : "ESTC Track · Diagnostic Results"}
         </div>
       </div>
 
@@ -755,14 +864,16 @@ function DiagnosticSummaryScreen({ history, onRetry, onHome, isHsk }) {
             textTransform: "uppercase", letterSpacing: 2, color: C.gold,
             marginBottom: 8,
           }}>
-            {passedAll ? "🏆 Outstanding!" : "Your Recommended Starting Level"}
+            {passedAll ? "🏆 Outstanding!" : isHsk ? "Your HSK Level" : "Your Recommended Starting Level"}
           </div>
           {passedAll ? (
             <div style={{
               fontFamily: "'Helvetica Neue', sans-serif", fontSize: 16,
               color: C.paper, lineHeight: 1.6,
             }}>
-              You passed all levels! You have advanced Mandarin proficiency.
+              {isHsk
+                ? "You passed HSK 1–4! You have upper-intermediate Mandarin proficiency."
+                : "You passed all ESTC levels! You have advanced Mandarin proficiency."}
             </div>
           ) : (
             <>
@@ -860,8 +971,8 @@ function DiagnosticSummaryScreen({ history, onRetry, onHome, isHsk }) {
           <Btn color={C.gold} style={{ color: C.ink }} onClick={handleShare}>
             Share My Results 📤
           </Btn>
-          <Btn color={C.blue} onClick={onRetry} secondary>
-            Retake Diagnostic
+          <Btn color={isHsk ? "#4f46e5" : C.blue} onClick={onRetry} secondary>
+            Retake {isHsk ? "HSK" : "ESTC"} Diagnostic
           </Btn>
           <Btn color={C.grey} onClick={onHome} secondary>
             Back to Home
