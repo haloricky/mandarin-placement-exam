@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { LEVEL_META, EXAMS } from "./examData.js";
+import { LEVEL_META, EXAMS, HSK_LEVEL_META, HSK_EXAMS } from "./examData.js";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
@@ -57,11 +57,19 @@ function shuffle(arr) {
   return a;
 }
 
-function getExam(levelId) {
-  const variants = EXAMS[levelId];
+function getExam(levelId, isHsk = false) {
+  const exams = isHsk ? HSK_EXAMS : EXAMS;
+  const variants = exams[levelId];
   const variant = Math.random() < 0.5 ? variants.a : variants.b;
   return shuffle(variant);
 }
+
+const HSK_PASS_MESSAGES = {
+  hsk1: "You're ready for HSK 2 preparation!",
+  hsk2: "HSK 2 level — you have basic everyday Chinese!",
+  hsk3: "HSK 3 level — you can handle daily Chinese situations!",
+  hsk4: "HSK 4 level — upper-intermediate Mandarin fluency!",
+};
 
 function pct(score, total = TOTAL_Q) {
   return Math.round((score / total) * 100);
@@ -143,7 +151,64 @@ function ProgressBar({ value, max, color = C.jade, thin }) {
 
 // ─── WELCOME SCREEN ───────────────────────────────────────────────────────────
 
-function WelcomeScreen({ onStart, onStartDiagnostic }) {
+function LevelButton({ lv, index, saved, onClick, disabled }) {
+  return (
+    <button
+      key={lv.id}
+      onClick={disabled ? undefined : () => onClick(index)}
+      style={{
+        background: disabled ? C.inkDeep : C.inkLight,
+        border: `1px solid ${disabled ? C.inkLight : lv.color + "30"}`,
+        borderRadius: 12, padding: "14px 16px",
+        display: "flex", alignItems: "center", gap: 14,
+        cursor: disabled ? "default" : "pointer", textAlign: "left",
+        transition: "border-color 0.2s", opacity: disabled ? 0.55 : 1,
+      }}
+    >
+      <div style={{
+        width: 42, height: 42, borderRadius: 10,
+        background: lv.color + "22", flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: 22,
+      }}>
+        {lv.icon}
+      </div>
+      <div style={{ flex: 1 }}>
+        <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 15, fontWeight: 600, color: disabled ? C.grey : C.paper }}>
+          {lv.name}
+          {disabled && (
+            <span style={{
+              marginLeft: 8, fontSize: 10, padding: "2px 7px", borderRadius: 4,
+              background: C.inkLight, color: C.grey, fontWeight: 400,
+              letterSpacing: 1, textTransform: "uppercase",
+            }}>
+              Coming Soon
+            </span>
+          )}
+        </div>
+        <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.grey, marginTop: 1 }}>
+          {lv.hsk} · {lv.description}
+        </div>
+      </div>
+      <div style={{ textAlign: "right", flexShrink: 0 }}>
+        {!disabled && saved ? (
+          <>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14, fontWeight: 700, color: lv.color }}>
+              {pct(saved.bestScore)}%
+            </div>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 10, color: C.grey }}>
+              best
+            </div>
+          </>
+        ) : !disabled ? (
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.grey }}>→</div>
+        ) : null}
+      </div>
+    </button>
+  );
+}
+
+function WelcomeScreen({ onStart, onStartDiagnostic, onStartHsk, onStartHskDiagnostic }) {
   const savedResults = loadResults();
 
   return (
@@ -184,81 +249,92 @@ function WelcomeScreen({ onStart, onStartDiagnostic }) {
           fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14,
           color: C.dim, textAlign: "center", marginBottom: 28, lineHeight: 1.7,
         }}>
-          Find out your Mandarin level. Choose a test below, or start from the beginning.
+          Find out your Mandarin level. Choose a track and test below, or run a full diagnostic.
         </p>
 
-        {/* Full diagnostic CTA */}
-        <Card style={{ background: C.inkLight, border: `1px solid ${C.gold}30`, marginBottom: 24 }}>
+        {/* Full Diagnostic card — two track options */}
+        <Card style={{ background: C.inkLight, border: `1px solid ${C.gold}30`, marginBottom: 28 }}>
           <div style={{ fontFamily: "'Noto Serif SC', serif", fontSize: 20, color: C.paper, marginBottom: 4 }}>
             Full Diagnostic
           </div>
           <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, color: C.grey, marginBottom: 16, lineHeight: 1.6 }}>
-            Start from Intro level and progress through each level automatically. Stops when you reach your ceiling.
+            Progress through each level automatically. Stops when you reach your ceiling. Choose your track:
           </div>
-          <Btn color={C.gold} style={{ color: C.ink }} onClick={onStartDiagnostic}>
-            Start Full Diagnostic →
-          </Btn>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button
+              onClick={onStartDiagnostic}
+              style={{
+                flex: 1, padding: "12px 10px", borderRadius: 10, border: `1.5px solid ${C.jadeSoft}40`,
+                background: C.jade + "18", color: C.jadeSoft, cursor: "pointer",
+                fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, fontWeight: 600,
+              }}
+            >
+              📚 ESTC Track
+            </button>
+            <button
+              onClick={onStartHskDiagnostic}
+              style={{
+                flex: 1, padding: "12px 10px", borderRadius: 10, border: `1.5px solid #4f46e540`,
+                background: "#4f46e518", color: "#818cf8", cursor: "pointer",
+                fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, fontWeight: 600,
+              }}
+            >
+              📋 HSK Track
+            </button>
+          </div>
         </Card>
 
-        {/* Level selector */}
+        {/* ── ESTC Section ── */}
         <div style={{
           fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11,
-          textTransform: "uppercase", letterSpacing: 2, color: C.grey,
+          textTransform: "uppercase", letterSpacing: 2, color: C.jadeSoft,
           marginBottom: 12,
         }}>
-          Or test a specific level
+          📚 Easy Steps to Chinese (ESTC)
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+          {LEVEL_META.map((lv, i) => (
+            <LevelButton key={lv.id} lv={lv} index={i} saved={savedResults[lv.id]} onClick={onStart} />
+          ))}
+        </div>
+
+        {/* Section Divider */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "4px 0 24px" }}>
+          <div style={{ flex: 1, height: 1, background: C.inkLight }} />
+          <div style={{
+            fontFamily: "'Helvetica Neue', sans-serif", fontSize: 10,
+            textTransform: "uppercase", letterSpacing: 2, color: C.grey,
+          }}>
+            Parallel Track
+          </div>
+          <div style={{ flex: 1, height: 1, background: C.inkLight }} />
+        </div>
+
+        {/* ── HSK Section ── */}
+        <div style={{
+          fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11,
+          textTransform: "uppercase", letterSpacing: 2, color: "#818cf8",
+          marginBottom: 4,
+        }}>
+          📋 HSK 2.0 Exam Preparation
+        </div>
+        <div style={{
+          fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12,
+          color: C.grey, marginBottom: 12,
+        }}>
+          Independent study path · Test your HSK exam readiness
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {LEVEL_META.map((lv, i) => {
-            const saved = savedResults[lv.id];
-            return (
-              <button
-                key={lv.id}
-                onClick={() => onStart(i)}
-                style={{
-                  background: C.inkLight, border: `1px solid ${lv.color}30`,
-                  borderRadius: 12, padding: "14px 16px",
-                  display: "flex", alignItems: "center", gap: 14,
-                  cursor: "pointer", textAlign: "left",
-                  transition: "border-color 0.2s",
-                }}
-              >
-                <div style={{
-                  width: 42, height: 42, borderRadius: 10,
-                  background: lv.color + "22", flexShrink: 0,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 22,
-                }}>
-                  {lv.icon}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 15, fontWeight: 600, color: C.paper }}>
-                    {lv.name}
-                  </div>
-                  <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.grey, marginTop: 1 }}>
-                    {lv.hsk} · {lv.description}
-                  </div>
-                </div>
-                <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  {saved ? (
-                    <>
-                      <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14, fontWeight: 700, color: lv.color }}>
-                        {pct(saved.bestScore)}%
-                      </div>
-                      <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 10, color: C.grey }}>
-                        best
-                      </div>
-                    </>
-                  ) : (
-                    <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.grey }}>
-                      →
-                    </div>
-                  )}
-                </div>
-              </button>
-            );
-          })}
+          {HSK_LEVEL_META.map((lv, i) => (
+            <LevelButton
+              key={lv.id} lv={lv} index={i}
+              saved={savedResults[lv.id]}
+              onClick={onStartHsk}
+              disabled={lv.comingSoon}
+            />
+          ))}
         </div>
 
         {/* Branding footer */}
@@ -276,9 +352,9 @@ function WelcomeScreen({ onStart, onStartDiagnostic }) {
 
 // ─── EXAM SCREEN ──────────────────────────────────────────────────────────────
 
-function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic }) {
-  const lv = LEVEL_META[levelIndex];
-  const [questions]   = useState(() => getExam(lv.id));
+function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic, isHsk }) {
+  const lv = isHsk ? HSK_LEVEL_META[levelIndex] : LEVEL_META[levelIndex];
+  const [questions]   = useState(() => getExam(lv.id, isHsk));
   const [current, setCurrent]     = useState(0);
   const [answers, setAnswers]     = useState([]);
   const [selected, setSelected]   = useState(null);   // MC selection
@@ -479,12 +555,14 @@ function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic }) {
 
 // ─── RESULTS SCREEN ───────────────────────────────────────────────────────────
 
-function ResultsScreen({ result, onTryNext, onRetry, onHome, onViewSummary, isDiagnostic }) {
+function ResultsScreen({ result, onTryNext, onRetry, onHome, onViewSummary, isDiagnostic, isHsk }) {
   const { levelIndex, score, total, elapsed, questions, answers } = result;
-  const lv = LEVEL_META[levelIndex];
+  const meta = isHsk ? HSK_LEVEL_META : LEVEL_META;
+  const lv = meta[levelIndex];
   const percentage = pct(score, total);
   const rating = getRating(percentage);
-  const canTryNext = percentage >= RECOMMEND_THRESHOLD && levelIndex < LEVEL_META.length - 1;
+  const nextLevel = meta[levelIndex + 1];
+  const canTryNext = percentage >= RECOMMEND_THRESHOLD && !!nextLevel && !nextLevel.comingSoon;
 
   function handleShare() {
     const text = `I scored ${percentage}% on the ${lv.name} Mandarin Placement Test by Mandarin Project! 🎉 Test your level too!`;
@@ -535,7 +613,9 @@ function ResultsScreen({ result, onTryNext, onRetry, onHome, onViewSummary, isDi
             fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14,
             color: C.dim, lineHeight: 1.6,
           }}>
-            {rating.sub}
+            {isHsk && percentage >= PASS_THRESHOLD && HSK_PASS_MESSAGES[lv.id]
+              ? HSK_PASS_MESSAGES[lv.id]
+              : rating.sub}
           </div>
         </Card>
 
@@ -590,7 +670,7 @@ function ResultsScreen({ result, onTryNext, onRetry, onHome, onViewSummary, isDi
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {canTryNext && !isDiagnostic && (
             <Btn color={lv.color} onClick={onTryNext}>
-              Try {LEVEL_META[levelIndex + 1].name} →
+              Try {nextLevel.name} →
             </Btn>
           )}
           <Btn color={C.blue} onClick={onRetry} secondary>
@@ -623,14 +703,14 @@ function ResultsScreen({ result, onTryNext, onRetry, onHome, onViewSummary, isDi
 
 // ─── DIAGNOSTIC SUMMARY SCREEN ────────────────────────────────────────────────
 
-function DiagnosticSummaryScreen({ history, onRetry, onHome }) {
+function DiagnosticSummaryScreen({ history, onRetry, onHome, isHsk }) {
+  const meta = isHsk ? HSK_LEVEL_META : LEVEL_META;
+  const activeMeta = isHsk ? meta.filter(lv => !lv.comingSoon) : meta;
   const lastPassed = [...history].reverse().find(h => pct(h.score) >= PASS_THRESHOLD);
-  const recommended = lastPassed
-    ? LEVEL_META[lastPassed.levelIndex]
-    : LEVEL_META[0];
+  const recommended = lastPassed ? meta[lastPassed.levelIndex] : meta[0];
 
-  // If they passed all levels
-  const passedAll = history.length === LEVEL_META.length &&
+  // If they passed all active levels
+  const passedAll = history.length === activeMeta.length &&
     pct(history[history.length - 1].score) >= PASS_THRESHOLD;
 
   function handleShare() {
@@ -712,7 +792,7 @@ function DiagnosticSummaryScreen({ history, onRetry, onHome }) {
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
             {history.map((h) => {
-              const lv = LEVEL_META[h.levelIndex];
+              const lv = meta[h.levelIndex];
               const p = pct(h.score);
               const passed = p >= PASS_THRESHOLD;
               return (
@@ -878,6 +958,7 @@ export default function App() {
   const [screen, setScreen]             = useState("welcome");
   const [levelIndex, setLevelIndex]     = useState(0);
   const [isDiagnostic, setIsDiagnostic] = useState(false);
+  const [isHskTrack, setIsHskTrack]     = useState(false);
   const [lastResult, setLastResult]     = useState(null);
   const [diagHistory, setDiagHistory]   = useState([]);
   const [diagStopped, setDiagStopped]   = useState(false);
@@ -887,12 +968,30 @@ export default function App() {
 
   function startSingleLevel(index) {
     setLevelIndex(index);
+    setIsHskTrack(false);
+    setIsDiagnostic(false);
+    setScreen("exam");
+  }
+
+  function startHskLevel(index) {
+    setLevelIndex(index);
+    setIsHskTrack(true);
     setIsDiagnostic(false);
     setScreen("exam");
   }
 
   function startDiagnostic() {
     setLevelIndex(0);
+    setIsHskTrack(false);
+    setIsDiagnostic(true);
+    setDiagHistory([]);
+    setDiagStopped(false);
+    setScreen("exam");
+  }
+
+  function startHskDiagnostic() {
+    setLevelIndex(0);
+    setIsHskTrack(true);
     setIsDiagnostic(true);
     setDiagHistory([]);
     setDiagStopped(false);
@@ -907,7 +1006,9 @@ export default function App() {
       const newHistory = [...diagHistory, result];
       setDiagHistory(newHistory);
 
-      if (p >= PASS_THRESHOLD && result.levelIndex < LEVEL_META.length - 1) {
+      const meta = isHskTrack ? HSK_LEVEL_META : LEVEL_META;
+      const nextMeta = meta[result.levelIndex + 1];
+      if (p >= PASS_THRESHOLD && nextMeta && !nextMeta.comingSoon) {
         // auto-advance after a brief results screen
         setScreen("results");
       } else {
@@ -943,6 +1044,7 @@ export default function App() {
   function goHome() {
     setScreen("welcome");
     setIsDiagnostic(false);
+    setIsHskTrack(false);
     setDiagHistory([]);
   }
 
@@ -951,6 +1053,8 @@ export default function App() {
       <WelcomeScreen
         onStart={startSingleLevel}
         onStartDiagnostic={startDiagnostic}
+        onStartHsk={startHskLevel}
+        onStartHskDiagnostic={startHskDiagnostic}
       />
     );
   }
@@ -958,9 +1062,10 @@ export default function App() {
   if (screen === "exam") {
     return (
       <ExamScreen
-        key={`${levelIndex}-${isDiagnostic}-${Date.now()}`}
+        key={`${levelIndex}-${isDiagnostic}-${isHskTrack}-${Date.now()}`}
         levelIndex={levelIndex}
         isDiagnostic={isDiagnostic}
+        isHsk={isHskTrack}
         onComplete={handleExamComplete}
         onBack={goHome}
       />
@@ -975,11 +1080,11 @@ export default function App() {
       <ResultsScreen
         result={lastResult}
         isDiagnostic={isDiagnostic}
+        isHsk={isHskTrack}
         onTryNext={handleTryNext}
         onRetry={handleRetry}
         onHome={goHome}
         onViewSummary={handleDiagnosticSummary}
-        // In diagnostic auto-advance mode, show "Next Level" prominently
         autoAdvance={autoAdvance}
       />
     );
@@ -989,7 +1094,8 @@ export default function App() {
     return (
       <DiagnosticSummaryScreen
         history={diagHistory}
-        onRetry={startDiagnostic}
+        isHsk={isHskTrack}
+        onRetry={isHskTrack ? startHskDiagnostic : startDiagnostic}
         onHome={goHome}
       />
     );
