@@ -330,6 +330,11 @@ function WelcomeScreen({ onStart, onStartDiagnostic, onStartHsk, onStartHskDiagn
   }
 
   // ── Track selection (default) ──────────────────────────────────────────────
+  const estcSaved = LEVEL_META.filter(lv => savedResults[lv.id]);
+  const hskSaved  = HSK_LEVEL_META.filter(lv => savedResults[lv.id] && !lv.comingSoon);
+  const hasCrossTrack = estcSaved.length > 0 && hskSaved.length > 0;
+  const hasAnySaved   = estcSaved.length > 0 || hskSaved.length > 0;
+
   return (
     <div style={{ minHeight: "100vh", background: C.ink, display: "flex", flexDirection: "column" }}>
       <Hero />
@@ -341,6 +346,64 @@ function WelcomeScreen({ onStart, onStartDiagnostic, onStartHsk, onStartHskDiagn
         <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, textTransform: "uppercase", letterSpacing: 2, color: C.grey, marginBottom: 16, textAlign: "center" }}>
           Choose Your Exam Track
         </div>
+
+        {/* ── Cross-track results summary ── */}
+        {hasAnySaved && (
+          <Card style={{ background: C.inkLight, border: `1px solid ${C.gold}22`, marginBottom: 20 }}>
+            <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, textTransform: "uppercase", letterSpacing: 2, color: C.gold, marginBottom: 12 }}>
+              Your Results
+            </div>
+            <div style={{ display: "flex", gap: 12 }}>
+              {/* ESTC column */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.jadeSoft, marginBottom: 7, fontWeight: 600 }}>
+                  📗 ESTC
+                </div>
+                {estcSaved.length === 0 ? (
+                  <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.grey }}>No attempts yet</div>
+                ) : (
+                  estcSaved.map(lv => (
+                    <div key={lv.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                      <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.dim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {lv.name}
+                      </span>
+                      <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, fontWeight: 700, color: lv.color, marginLeft: 6, flexShrink: 0 }}>
+                        {pct(savedResults[lv.id].bestScore)}%
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+              {/* Divider */}
+              <div style={{ width: 1, background: C.inkDeep, flexShrink: 0 }} />
+              {/* HSK column */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: "#818cf8", marginBottom: 7, fontWeight: 600 }}>
+                  📋 HSK
+                </div>
+                {hskSaved.length === 0 ? (
+                  <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.grey }}>No attempts yet</div>
+                ) : (
+                  hskSaved.map(lv => (
+                    <div key={lv.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 5 }}>
+                      <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.dim, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {lv.name}
+                      </span>
+                      <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, fontWeight: 700, color: lv.color, marginLeft: 6, flexShrink: 0 }}>
+                        {pct(savedResults[lv.id].bestScore)}%
+                      </span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+            {hasCrossTrack && (
+              <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.inkDeep}`, fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.grey, textAlign: "center" }}>
+                You've attempted both tracks — great work! 🎉
+              </div>
+            )}
+          </Card>
+        )}
 
         {/* Track cards */}
         <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 28 }}>
@@ -775,6 +838,28 @@ function ResultsScreen({ result, onTryNext, onRetry, onHome, onViewSummary, isDi
           </div>
         </Card>
 
+        {/* Cross-track nudge: if they haven't tried the other track yet */}
+        {(() => {
+          const allSaved = loadResults();
+          const otherMeta = isHsk ? LEVEL_META : HSK_LEVEL_META.filter(l => !l.comingSoon);
+          const otherHasAny = otherMeta.some(l => allSaved[l.id]);
+          const otherTrackLabel = isHsk ? "📗 ESTC Track" : "📋 HSK Track";
+          const otherDesc = isHsk
+            ? "See how you score on the Easy Steps to Chinese curriculum."
+            : "Test your HSK exam readiness with the official proficiency track.";
+          if (otherHasAny) return null; // already tried it — no nudge needed
+          return (
+            <Card style={{ background: C.inkLight, border: `1px solid ${C.gold}20`, marginBottom: 24, textAlign: "center" }}>
+              <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.gold, marginBottom: 4, fontWeight: 600 }}>
+                Try the {otherTrackLabel}
+              </div>
+              <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, color: C.grey, lineHeight: 1.6 }}>
+                {otherDesc}
+              </div>
+            </Card>
+          );
+        })()}
+
         {/* Action buttons */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {canTryNext && !isDiagnostic && (
@@ -936,6 +1021,45 @@ function DiagnosticSummaryScreen({ history, onRetry, onHome, isHsk }) {
             })}
           </div>
         </Card>
+
+        {/* Cross-track results (shown when both tracks have saved data) */}
+        {(() => {
+          const allSaved = loadResults();
+          const otherMeta = isHsk ? LEVEL_META : HSK_LEVEL_META.filter(lv => !lv.comingSoon);
+          const otherSaved = otherMeta.filter(lv => allSaved[lv.id]);
+          if (otherSaved.length === 0) return null;
+          const otherLabel = isHsk ? "📗 ESTC" : "📋 HSK";
+          const otherColor = isHsk ? C.jadeSoft : "#818cf8";
+          return (
+            <Card style={{ background: C.inkLight, border: `1px solid ${C.gold}20`, marginBottom: 20 }}>
+              <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, textTransform: "uppercase", letterSpacing: 2, color: C.gold, marginBottom: 10 }}>
+                Cross-Track Results
+              </div>
+              <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.grey, marginBottom: 12 }}>
+                You also have results from the {otherLabel} track:
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {otherSaved.map(lv => {
+                  const s = allSaved[lv.id];
+                  const p = pct(s.bestScore);
+                  return (
+                    <div key={lv.id}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 3 }}>
+                        <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.dim }}>
+                          {lv.icon} {lv.name}
+                        </span>
+                        <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, fontWeight: 700, color: otherColor }}>
+                          {p}%
+                        </span>
+                      </div>
+                      <ProgressBar value={s.bestScore} max={TOTAL_Q} color={otherColor} thin />
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          );
+        })()}
 
         {/* Enrol CTA */}
         <Card style={{ background: C.inkLight, border: `1px solid ${C.gold}25`, marginBottom: 20, textAlign: "center" }}>
