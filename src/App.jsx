@@ -28,6 +28,7 @@ const RECOMMEND_THRESHOLD = 60;  // % to get "good foundation" rating
 const TOTAL_Q             = 50;
 
 const STORAGE_KEY = "mandarin_placement_results";
+const REVIEW_KEY  = "mandarin_placement_review";
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -69,6 +70,8 @@ const HSK_PASS_MESSAGES = {
   hsk2: "HSK 2 level — you have basic everyday Chinese!",
   hsk3: "HSK 3 level — you can handle daily Chinese situations!",
   hsk4: "HSK 4 level — upper-intermediate Mandarin fluency!",
+  hsk5: "Advanced fluency — ready for professional Chinese",
+  hsk6: "Near-native proficiency — ready for academic/professional Chinese",
 };
 
 function pct(score, total = TOTAL_Q) {
@@ -95,6 +98,21 @@ function saveResult(levelId, score) {
     attempts: prev.attempts + 1,
   };
   localStorage.setItem(STORAGE_KEY, JSON.stringify(all));
+}
+
+function saveReview(levelId, questions, answers) {
+  try {
+    const all = JSON.parse(localStorage.getItem(REVIEW_KEY)) || {};
+    all[levelId] = { questions, answers, timestamp: Date.now() };
+    localStorage.setItem(REVIEW_KEY, JSON.stringify(all));
+  } catch {}
+}
+
+function loadReview(levelId) {
+  try {
+    const all = JSON.parse(localStorage.getItem(REVIEW_KEY)) || {};
+    return all[levelId] || null;
+  } catch { return null; }
 }
 
 function getRating(percentage) {
@@ -484,22 +502,17 @@ function WelcomeScreen({ onStart, onStartDiagnostic, onStartHsk, onStartHskDiagn
                   HSK 2.0
                 </div>
                 <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: "#818cf8" }}>
-                  HSK Track · HSK 1–4 active
+                  HSK Track · HSK 1–6 active
                 </div>
               </div>
             </div>
             <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, color: C.grey, lineHeight: 1.6, marginBottom: 12 }}>
-              Official Chinese Proficiency Test preparation. Covers HSK 1–4 vocabulary and grammar structures.
+              Official Chinese Proficiency Test preparation. Covers HSK 1–6 vocabulary and grammar structures.
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {["HSK 1", "HSK 2", "HSK 3", "HSK 4"].map(tag => (
+              {["HSK 1", "HSK 2", "HSK 3", "HSK 4", "HSK 5", "HSK 6"].map(tag => (
                 <span key={tag} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 4, background: "#4f46e518", color: "#818cf8", fontFamily: "'Helvetica Neue', sans-serif" }}>
                   {tag}
-                </span>
-              ))}
-              {["HSK 5", "HSK 6"].map(tag => (
-                <span key={tag} style={{ fontSize: 11, padding: "3px 8px", borderRadius: 4, background: C.inkDeep, color: C.grey, fontFamily: "'Helvetica Neue', sans-serif" }}>
-                  {tag} soon
                 </span>
               ))}
             </div>
@@ -611,20 +624,25 @@ function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic, isHsk }) {
   function submitAnswer() {
     if (!canAdvance) return;
     let isCorrect;
+    let userChoice;
     if (isMC) {
       isCorrect = selected === q.answer;
+      userChoice = selected;
     } else if (isTextInput) {
       isCorrect = qType === "fill_blank"
         ? textInput.trim() === (q.answer || "").trim()
         : pinyinMatch(textInput, q.answer);
+      userChoice = textInput.trim();
     } else if (isReorder) {
       const built = reorderPicked.map(i => (q.options || [])[i]).join("");
       isCorrect = built === (q.answer || "").replace(/\s+/g, "");
+      userChoice = built;
     }
     const newAnswers = [...answers, {
       questionIndex: current,
       correct: isCorrect,
       category: getCategory(qType),
+      userChoice,
     }];
     setAnswers(newAnswers);
     setSelected(null);
@@ -911,7 +929,7 @@ function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic, isHsk }) {
 
 // ─── RESULTS SCREEN ───────────────────────────────────────────────────────────
 
-function ResultsScreen({ result, onTryNext, onRetry, onHome, onViewSummary, isDiagnostic, isHsk }) {
+function ResultsScreen({ result, onTryNext, onRetry, onHome, onViewSummary, onReview, isDiagnostic, isHsk }) {
   const { levelIndex, score, total, elapsed, questions, answers } = result;
   const meta = isHsk ? HSK_LEVEL_META : LEVEL_META;
   const lv = meta[levelIndex];
@@ -1083,6 +1101,13 @@ function ResultsScreen({ result, onTryNext, onRetry, onHome, onViewSummary, isDi
           );
         })()}
 
+        {/* Review answers */}
+        <div style={{ marginBottom: 10 }}>
+          <Btn color={lv.color} onClick={onReview} secondary>
+            📋 Review Answers
+          </Btn>
+        </div>
+
         {/* Action buttons */}
         <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
           {canTryNext && !isDiagnostic && (
@@ -1120,7 +1145,7 @@ function ResultsScreen({ result, onTryNext, onRetry, onHome, onViewSummary, isDi
 
 // ─── DIAGNOSTIC SUMMARY SCREEN ────────────────────────────────────────────────
 
-function DiagnosticSummaryScreen({ history, onRetry, onHome, isHsk }) {
+function DiagnosticSummaryScreen({ history, onRetry, onHome, onReview, isHsk }) {
   const meta = isHsk ? HSK_LEVEL_META : LEVEL_META;
   const activeMeta = isHsk ? meta.filter(lv => !lv.comingSoon) : meta;
   const lastPassed = [...history].reverse().find(h => pct(h.score) >= PASS_THRESHOLD);
@@ -1180,7 +1205,7 @@ function DiagnosticSummaryScreen({ history, onRetry, onHome, isHsk }) {
               color: C.paper, lineHeight: 1.6,
             }}>
               {isHsk
-                ? "You passed HSK 1–4! You have upper-intermediate Mandarin proficiency."
+                ? "You passed HSK 1–6! You have near-native Mandarin proficiency."
                 : "You passed all ESTC levels! You have advanced Mandarin proficiency."}
             </div>
           ) : (
@@ -1239,6 +1264,20 @@ function DiagnosticSummaryScreen({ history, onRetry, onHome, isHsk }) {
                     </span>
                   </div>
                   <ProgressBar value={h.score} max={h.total} color={passed ? C.jade : C.red} thin />
+                  {h.questions && h.answers && (
+                    <button
+                      onClick={() => onReview(h)}
+                      style={{
+                        marginTop: 8, background: "none",
+                        border: `1px solid ${lv.color}40`,
+                        borderRadius: 7, padding: "4px 10px", cursor: "pointer",
+                        fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11,
+                        color: lv.color,
+                      }}
+                    >
+                      📋 Review answers
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -1410,6 +1449,313 @@ function DiagnosticStopScreen({ result, history, onContinue, onSummary, onHome }
   );
 }
 
+// ─── REVIEW SCREEN ────────────────────────────────────────────────────────────
+
+const MC_TYPES = new Set([
+  "match", "hanzi", "translate", "meaning_read", "hanzi_read", "passage_read",
+  "error_find", "grammar_match", "listen_hanzi", "listen_meaning", "listen_tone",
+]);
+
+function ReviewScreen({ result, onBack, isHsk }) {
+  const { levelIndex, score, total, questions, answers } = result;
+  const meta = isHsk ? HSK_LEVEL_META : LEVEL_META;
+  const lv = meta[levelIndex];
+  const [wrongOnly, setWrongOnly] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const wrongCount = answers.filter(a => !a.correct).length;
+  const displayItems = (wrongOnly ? answers.filter(a => !a.correct) : answers)
+    .map(a => ({ a, origIdx: answers.indexOf(a) }));
+
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 350);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  return (
+    <div style={{ minHeight: "100vh", background: C.ink, display: "flex", flexDirection: "column" }}>
+
+      {/* Sticky header */}
+      <div style={{
+        background: C.inkDeep, padding: "14px 20px",
+        display: "flex", alignItems: "center", gap: 12,
+        borderBottom: `1px solid ${lv.color}30`,
+        position: "sticky", top: 0, zIndex: 10,
+      }}>
+        <button
+          onClick={onBack}
+          style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: C.grey, fontSize: 18, padding: "2px 6px", borderRadius: 6,
+            fontFamily: "'Helvetica Neue', sans-serif",
+          }}
+        >←</button>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14, fontWeight: 600, color: C.paper }}>
+            {lv.icon} {lv.name} Exam Review
+          </div>
+          <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.grey, marginTop: 1 }}>
+            {score}/{total} correct · {wrongCount} wrong
+          </div>
+        </div>
+      </div>
+
+      {/* Filter bar */}
+      <div style={{
+        background: C.inkLight, padding: "10px 20px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        borderBottom: `1px solid ${C.inkDeep}`,
+      }}>
+        <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.grey }}>
+          Reviewing <strong style={{ color: C.dim }}>{displayItems.length}</strong> question{displayItems.length !== 1 ? "s" : ""}
+          {wrongCount > 0 && <span style={{ color: C.redSoft }}> · {wrongCount} wrong</span>}
+        </span>
+        <button
+          onClick={() => setWrongOnly(w => !w)}
+          style={{
+            background: wrongOnly ? C.red + "22" : C.inkDeep,
+            border: `1px solid ${wrongOnly ? C.redSoft + "80" : C.grey + "30"}`,
+            borderRadius: 8, padding: "5px 12px", cursor: "pointer",
+            fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12,
+            color: wrongOnly ? C.redSoft : C.grey,
+          }}
+        >
+          {wrongOnly ? "✗ Wrong Only" : "Show Wrong Only"}
+        </button>
+      </div>
+
+      {/* Question list */}
+      <div style={{ flex: 1, padding: "16px 20px 60px", maxWidth: 480, margin: "0 auto", width: "100%", boxSizing: "border-box" }}>
+
+        {displayItems.length === 0 && (
+          <div style={{
+            textAlign: "center", padding: "60px 20px",
+            fontFamily: "'Helvetica Neue', sans-serif", fontSize: 15, color: C.grey,
+          }}>
+            🎉 No wrong answers!
+          </div>
+        )}
+
+        {displayItems.map(({ a, origIdx }) => {
+          const q = questions[a.questionIndex];
+          if (!q) return null;
+          const qType = q.type || "match";
+          const isListening = qType.startsWith("listen_");
+          const isMC = MC_TYPES.has(qType);
+          const isText = qType === "pinyin" || qType === "pinyin_read" || qType === "fill_blank";
+          const isReorder = qType === "reorder";
+
+          return (
+            <div
+              key={origIdx}
+              style={{
+                background: C.inkLight,
+                border: `1px solid ${a.correct ? C.jade + "35" : C.red + "35"}`,
+                borderRadius: 14, padding: "14px 14px 12px",
+                marginBottom: 12, position: "relative",
+              }}
+            >
+              {/* ✓ / ✗ badge */}
+              <div style={{
+                position: "absolute", top: 12, right: 12,
+                width: 24, height: 24, borderRadius: "50%",
+                background: a.correct ? C.jade + "25" : C.red + "25",
+                border: `1px solid ${a.correct ? C.jadeSoft + "60" : C.redSoft + "60"}`,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 12, fontWeight: 700,
+                color: a.correct ? C.jadeSoft : C.redSoft,
+              }}>
+                {a.correct ? "✓" : "✗"}
+              </div>
+
+              {/* Question number + type icon */}
+              <div style={{
+                fontFamily: "'Helvetica Neue', sans-serif", fontSize: 10,
+                color: lv.color, letterSpacing: 1.5, textTransform: "uppercase",
+                fontWeight: 600, marginBottom: 10, paddingRight: 32,
+              }}>
+                {getCatIcon(qType)} Q{origIdx + 1}
+              </div>
+
+              {/* Listening: replay button */}
+              {isListening && q.audio && (
+                <div style={{ marginBottom: 10 }}>
+                  <button
+                    onClick={() => speakChinese(q.audio)}
+                    style={{
+                      background: lv.color + "18", border: `1.5px solid ${lv.color}50`,
+                      borderRadius: 8, padding: "7px 14px", cursor: "pointer",
+                      fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13,
+                      color: lv.color, display: "inline-flex", alignItems: "center", gap: 6,
+                    }}
+                  >
+                    🔊 Replay audio
+                  </button>
+                </div>
+              )}
+
+              {/* Passage */}
+              {qType === "passage_read" && q.passage && (
+                <div style={{
+                  background: C.inkDeep, borderRadius: 8, padding: "12px 14px", marginBottom: 12,
+                  fontFamily: "'Noto Serif SC', serif", fontSize: 14, color: C.paper, lineHeight: 1.9,
+                }}>
+                  {q.passage}
+                </div>
+              )}
+
+              {/* Reorder: show scrambled word tiles */}
+              {isReorder && q.options && (
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 10, color: C.grey, marginBottom: 6, letterSpacing: 1 }}>
+                    WORD TILES
+                  </div>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {q.options.map((w, wi) => (
+                      <span key={wi} style={{
+                        background: C.inkDeep, border: `1px solid ${C.grey}25`,
+                        borderRadius: 6, padding: "4px 10px",
+                        fontFamily: "'Noto Serif SC', serif", fontSize: 16, color: C.dim,
+                      }}>
+                        {w}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Question text */}
+              {q.question && (
+                <div style={{
+                  fontFamily: String(q.question).match(/[\u4e00-\u9fff]/) ? "'Noto Serif SC', serif" : "'Helvetica Neue', sans-serif",
+                  fontSize: String(q.question).match(/[\u4e00-\u9fff]/) ? 20 : 15,
+                  color: C.paper, lineHeight: 1.5, marginBottom: 12, paddingRight: 28,
+                }}>
+                  {q.question}
+                </div>
+              )}
+
+              {/* MC options with colour coding */}
+              {isMC && q.options && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                  {q.options.map((opt, oi) => {
+                    const isCorrectOpt  = oi === q.answer;
+                    const isUserOpt     = oi === a.userChoice;
+                    const isWrongChoice = isUserOpt && !a.correct;
+
+                    let bg          = C.inkDeep;
+                    let borderColor = "transparent";
+                    let textColor   = C.grey;
+                    if (isCorrectOpt)   { bg = "#1a7a5a22"; borderColor = C.jadeSoft; textColor = C.jadeSoft; }
+                    if (isWrongChoice)  { bg = "#c0392b22"; borderColor = C.redSoft;  textColor = C.redSoft; }
+
+                    return (
+                      <div key={oi} style={{
+                        background: bg, border: `1.5px solid ${borderColor}`,
+                        borderRadius: 8, padding: "9px 13px",
+                        display: "flex", alignItems: "center", gap: 10,
+                      }}>
+                        <div style={{
+                          width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                          background: isCorrectOpt ? C.jade + "30" : isWrongChoice ? C.red + "30" : C.ink,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 11, fontWeight: 700, color: textColor,
+                          fontFamily: "'Helvetica Neue', sans-serif",
+                        }}>
+                          {isCorrectOpt ? "✓" : isWrongChoice ? "✗" : String.fromCharCode(65 + oi)}
+                        </div>
+                        <span style={{
+                          fontFamily: String(opt).match(/[\u4e00-\u9fff]/) ? "'Noto Serif SC', serif" : "'Helvetica Neue', sans-serif",
+                          fontSize: String(opt).match(/[\u4e00-\u9fff]/) ? 17 : 14,
+                          color: textColor,
+                        }}>
+                          {opt}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Text input: show user answer + correct */}
+              {isText && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                  <div style={{
+                    background: a.correct ? "#1a7a5a22" : "#c0392b22",
+                    border: `1.5px solid ${a.correct ? C.jadeSoft : C.redSoft}`,
+                    borderRadius: 8, padding: "9px 13px",
+                  }}>
+                    <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.grey }}>Your answer: </span>
+                    <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14, color: a.correct ? C.jadeSoft : C.redSoft }}>
+                      {a.userChoice || "(no answer)"}
+                    </span>
+                  </div>
+                  {!a.correct && (
+                    <div style={{
+                      background: "#1a7a5a22", border: `1.5px solid ${C.jadeSoft}`,
+                      borderRadius: 8, padding: "9px 13px",
+                    }}>
+                      <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.grey }}>Correct: </span>
+                      <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14, color: C.jadeSoft }}>
+                        {q.answer}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Reorder: show user order + correct */}
+              {isReorder && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                  <div style={{
+                    background: a.correct ? "#1a7a5a22" : "#c0392b22",
+                    border: `1.5px solid ${a.correct ? C.jadeSoft : C.redSoft}`,
+                    borderRadius: 8, padding: "9px 13px",
+                  }}>
+                    <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.grey }}>Your order: </span>
+                    <span style={{ fontFamily: "'Noto Serif SC', serif", fontSize: 16, color: a.correct ? C.jadeSoft : C.redSoft }}>
+                      {a.userChoice || "(not answered)"}
+                    </span>
+                  </div>
+                  {!a.correct && (
+                    <div style={{
+                      background: "#1a7a5a22", border: `1.5px solid ${C.jadeSoft}`,
+                      borderRadius: 8, padding: "9px 13px",
+                    }}>
+                      <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.grey }}>Correct: </span>
+                      <span style={{ fontFamily: "'Noto Serif SC', serif", fontSize: 16, color: C.jadeSoft }}>
+                        {q.answer}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Scroll-to-top FAB */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          style={{
+            position: "fixed", bottom: 24, right: 20,
+            width: 44, height: 44, borderRadius: "50%",
+            background: lv.color, border: "none", cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 20, color: C.white, boxShadow: "0 3px 14px rgba(0,0,0,0.35)",
+            zIndex: 20,
+          }}
+        >
+          ↑
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
 
 export default function App() {
@@ -1420,6 +1766,7 @@ export default function App() {
   const [lastResult, setLastResult]     = useState(null);
   const [diagHistory, setDiagHistory]   = useState([]);
   const [diagStopped, setDiagStopped]   = useState(false);
+  const [reviewResult, setReviewResult] = useState(null);
 
   // scroll to top on screen change
   useEffect(() => { window.scrollTo(0, 0); }, [screen]);
@@ -1456,8 +1803,16 @@ export default function App() {
     setScreen("exam");
   }
 
+  function handleReview(result) {
+    setReviewResult(result);
+    setScreen("review");
+  }
+
   function handleExamComplete(result) {
     setLastResult(result);
+    const meta = isHskTrack ? HSK_LEVEL_META : LEVEL_META;
+    const lv = meta[result.levelIndex];
+    saveReview(lv.id, result.questions, result.answers);
     const p = pct(result.score);
 
     if (isDiagnostic) {
@@ -1543,6 +1898,7 @@ export default function App() {
         onRetry={handleRetry}
         onHome={goHome}
         onViewSummary={handleDiagnosticSummary}
+        onReview={() => handleReview(lastResult)}
         autoAdvance={autoAdvance}
       />
     );
@@ -1555,6 +1911,17 @@ export default function App() {
         isHsk={isHskTrack}
         onRetry={isHskTrack ? startHskDiagnostic : startDiagnostic}
         onHome={goHome}
+        onReview={handleReview}
+      />
+    );
+  }
+
+  if (screen === "review" && reviewResult) {
+    return (
+      <ReviewScreen
+        result={reviewResult}
+        isHsk={isHskTrack}
+        onBack={() => setScreen(diagHistory.includes(reviewResult) ? "diagnostic-summary" : "results")}
       />
     );
   }
