@@ -23,9 +23,9 @@ const C = {
   dim:        "#c8c4b8",
 };
 
-const PASS_THRESHOLD    = 80;  // % to auto-advance in diagnostic
-const RECOMMEND_THRESHOLD = 60; // % to get "good foundation" rating
-const TOTAL_Q = 20;
+const PASS_THRESHOLD      = 80;  // % to auto-advance in diagnostic
+const RECOMMEND_THRESHOLD = 60;  // % to get "good foundation" rating
+const TOTAL_Q             = 50;
 
 const STORAGE_KEY = "mandarin_placement_results";
 
@@ -102,6 +102,30 @@ function getRating(percentage) {
   if (percentage >= 80) return { label: "Great!", sub: "You're ready for the next level.", color: C.jadeSoft };
   if (percentage >= 60) return { label: "Good foundation.", sub: "We recommend starting at this level.", color: C.gold };
   return { label: "Keep practising.", sub: "We recommend starting at the level below this one.", color: C.red };
+}
+
+function speakChinese(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "zh-CN";
+  utter.rate = 0.55;
+  utter.pitch = 0.85;
+  window.speechSynthesis.speak(utter);
+}
+
+function getCatIcon(type) {
+  if (!type) return "📖";
+  if (type.startsWith("listen_")) return "🔊";
+  if (["fill_blank", "reorder", "error_find", "grammar_match"].includes(type)) return "📝";
+  return "📖";
+}
+
+function getCategory(type) {
+  if (!type) return "reading";
+  if (type.startsWith("listen_")) return "listening";
+  if (["fill_blank", "reorder", "error_find", "grammar_match"].includes(type)) return "grammar";
+  return "reading";
 }
 
 // ─── UI PRIMITIVES ────────────────────────────────────────────────────────────
@@ -526,12 +550,14 @@ function WelcomeScreen({ onStart, onStartDiagnostic, onStartHsk, onStartHskDiagn
 
 function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic, isHsk }) {
   const lv = isHsk ? HSK_LEVEL_META[levelIndex] : LEVEL_META[levelIndex];
-  const [questions]   = useState(() => getExam(lv.id, isHsk));
-  const [current, setCurrent]     = useState(0);
-  const [answers, setAnswers]     = useState([]);
-  const [selected, setSelected]   = useState(null);   // MC selection
-  const [textInput, setTextInput] = useState("");     // pinyin input
-  const [elapsed, setElapsed]     = useState(0);
+  const [questions]        = useState(() => getExam(lv.id, isHsk));
+  const [current, setCurrent]         = useState(0);
+  const [answers, setAnswers]         = useState([]);
+  const [selected, setSelected]       = useState(null);
+  const [textInput, setTextInput]     = useState("");
+  const [reorderPicked, setReorderPicked] = useState([]);
+  const [isPlaying, setIsPlaying]     = useState(false);
+  const [elapsed, setElapsed]         = useState(0);
   const timerRef = useRef(null);
   const inputRef = useRef(null);
 
@@ -541,29 +567,75 @@ function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic, isHsk }) {
   }, []);
 
   const q = questions[current];
-  const isPinyin = q.type === "pinyin";
-  const isMC     = q.type === "match" || q.type === "hanzi" || q.type === "translate";
+  const qType = q.type || "match";
+  const isListening = qType.startsWith("listen_");
+  const isMC = ["match", "hanzi", "translate", "meaning_read", "hanzi_read", "passage_read",
+                 "error_find", "grammar_match", "listen_hanzi", "listen_meaning", "listen_tone"].includes(qType);
+  const isTextInput = qType === "pinyin" || qType === "pinyin_read" || qType === "fill_blank";
+  const isReorder = qType === "reorder";
+  const totalQ = questions.length;
 
-  const canAdvance = selected !== null || (isPinyin && textInput.trim().length > 0);
+  // Auto-play on listening questions
+  useEffect(() => {
+    if (isListening && q.audio) {
+      const t = setTimeout(() => playAudio(), 400);
+      return () => clearTimeout(t);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current]);
+
+  function playAudio() {
+    if (!q.audio) return;
+    setIsPlaying(true);
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(q.audio);
+      utter.lang = "zh-CN";
+      utter.rate = 0.55;
+      utter.pitch = 0.85;
+      utter.onend = () => setIsPlaying(false);
+      utter.onerror = () => setIsPlaying(false);
+      window.speechSynthesis.speak(utter);
+    } else {
+      setTimeout(() => setIsPlaying(false), 1500);
+    }
+  }
+
+  const reorderRemaining = (q.options || []).map((_, i) => i).filter(i => !reorderPicked.includes(i));
+
+  const canAdvance =
+    (isMC && selected !== null) ||
+    (isTextInput && textInput.trim().length > 0) ||
+    (isReorder && reorderPicked.length === (q.options || []).length);
 
   function submitAnswer() {
     if (!canAdvance) return;
     let isCorrect;
-    if (isPinyin) {
-      isCorrect = pinyinMatch(textInput, q.answer);
-    } else {
+    if (isMC) {
       isCorrect = selected === q.answer;
+    } else if (isTextInput) {
+      isCorrect = qType === "fill_blank"
+        ? textInput.trim() === (q.answer || "").trim()
+        : pinyinMatch(textInput, q.answer);
+    } else if (isReorder) {
+      const built = reorderPicked.map(i => (q.options || [])[i]).join("");
+      isCorrect = built === (q.answer || "").replace(/\s+/g, "");
     }
-    const newAnswers = [...answers, { questionIndex: current, correct: isCorrect }];
+    const newAnswers = [...answers, {
+      questionIndex: current,
+      correct: isCorrect,
+      category: getCategory(qType),
+    }];
     setAnswers(newAnswers);
     setSelected(null);
     setTextInput("");
+    setReorderPicked([]);
 
-    if (current + 1 >= TOTAL_Q) {
+    if (current + 1 >= totalQ) {
       clearInterval(timerRef.current);
       const score = newAnswers.filter(a => a.correct).length;
       saveResult(lv.id, score);
-      onComplete({ levelIndex, score, total: TOTAL_Q, elapsed, questions, answers: newAnswers });
+      onComplete({ levelIndex, score, total: totalQ, elapsed, questions, answers: newAnswers });
     } else {
       setCurrent(c => c + 1);
       setTimeout(() => inputRef.current?.focus(), 50);
@@ -571,8 +643,26 @@ function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic, isHsk }) {
   }
 
   function handleKey(e) {
-    if (e.key === "Enter") submitAnswer();
+    if (e.key === "Enter" && !isReorder) submitAnswer();
   }
+
+  const TYPE_BADGE = {
+    match:          "Choose the meaning",
+    pinyin:         "Type the pinyin",
+    pinyin_read:    "Type the pinyin",
+    hanzi:          "Select the character",
+    hanzi_read:     "Select the character",
+    translate:      "Choose the translation",
+    meaning_read:   "Choose the meaning",
+    passage_read:   "Reading comprehension",
+    fill_blank:     "Fill in the blank",
+    reorder:        "Rearrange the words",
+    error_find:     "Find the error",
+    grammar_match:  "Match the grammar",
+    listen_hanzi:   "Listen · select the character",
+    listen_meaning: "Listen · choose the meaning",
+    listen_tone:    "Listen · identify the tone",
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: C.ink, display: "flex", flexDirection: "column" }}>
@@ -599,7 +689,7 @@ function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic, isHsk }) {
           }}>
             {lv.icon} {lv.name} {isDiagnostic && <span style={{ color: C.gold, fontSize: 11 }}>· Diagnostic</span>}
           </div>
-          <ProgressBar value={current} max={TOTAL_Q} color={lv.color} thin />
+          <ProgressBar value={current} max={totalQ} color={lv.color} thin />
         </div>
         <div style={{
           fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.grey,
@@ -609,42 +699,91 @@ function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic, isHsk }) {
         </div>
       </div>
 
-      {/* Question counter */}
+      {/* Question counter with category icon */}
       <div style={{
         padding: "18px 24px 0",
         fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12,
         color: C.grey, textAlign: "center", letterSpacing: 1,
       }}>
-        Question {current + 1} / {TOTAL_Q}
+        {getCatIcon(qType)} Q {current + 1} / {totalQ}
       </div>
 
-      {/* Question */}
+      {/* Question card + answers */}
       <div style={{ flex: 1, padding: "20px 20px 16px", maxWidth: 480, margin: "0 auto", width: "100%" }}>
         <Card style={{ background: C.inkLight, border: `1px solid ${lv.color}25`, marginBottom: 20 }}>
-          {/* Type badge */}
           <div style={{
             fontFamily: "'Helvetica Neue', sans-serif", fontSize: 10,
             textTransform: "uppercase", letterSpacing: 2,
             color: lv.color, marginBottom: 10, fontWeight: 600,
           }}>
-            {q.type === "match" ? "Choose the meaning" :
-             q.type === "pinyin" ? "Type the pinyin" :
-             q.type === "hanzi" ? "Select the character" :
-             "Choose the translation"}
+            {TYPE_BADGE[qType] || "Answer the question"}
           </div>
-          <div style={{
-            fontFamily: q.question.match(/[\u4e00-\u9fff]/) ? "'Noto Serif SC', serif" : "'Helvetica Neue', sans-serif",
-            fontSize: q.question.match(/[\u4e00-\u9fff]/) ? 30 : 17,
-            color: C.paper, lineHeight: 1.4, fontWeight: 400,
-          }}>
-            {q.question}
-          </div>
+
+          {/* Listening — show play button only */}
+          {isListening ? (
+            <div style={{ textAlign: "center", padding: "10px 0 4px" }}>
+              <button
+                onClick={playAudio}
+                style={{
+                  background: isPlaying ? lv.color + "22" : lv.color,
+                  border: `2px solid ${lv.color}`,
+                  borderRadius: "50%", width: 72, height: 72,
+                  cursor: "pointer", fontSize: 28,
+                  display: "inline-flex", alignItems: "center", justifyContent: "center",
+                  transition: "background 0.2s",
+                }}
+              >
+                {isPlaying ? "⏸" : "🔊"}
+              </button>
+              {isPlaying && (
+                <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: lv.color, marginTop: 8 }}>
+                  Playing...
+                </div>
+              )}
+              <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.grey, marginTop: 6 }}>
+                Tap to replay
+              </div>
+              {q.question && (
+                <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 14, color: C.dim, marginTop: 12, lineHeight: 1.5 }}>
+                  {q.question}
+                </div>
+              )}
+            </div>
+
+          /* Passage — show passage box then question */
+          ) : qType === "passage_read" ? (
+            <>
+              <div style={{
+                background: C.inkDeep, borderRadius: 8, padding: "14px 16px",
+                marginBottom: 14, fontFamily: "'Noto Serif SC', serif",
+                fontSize: 15, color: C.paper, lineHeight: 1.9, letterSpacing: 0.5,
+              }}>
+                {q.passage}
+              </div>
+              <div style={{
+                fontFamily: "'Helvetica Neue', sans-serif", fontSize: 15,
+                color: C.dim, lineHeight: 1.5,
+              }}>
+                {q.question}
+              </div>
+            </>
+
+          /* Standard question */
+          ) : (
+            <div style={{
+              fontFamily: (q.question || "").match(/[\u4e00-\u9fff]/) ? "'Noto Serif SC', serif" : "'Helvetica Neue', sans-serif",
+              fontSize: (q.question || "").match(/[\u4e00-\u9fff]/) ? 30 : 17,
+              color: C.paper, lineHeight: 1.4, fontWeight: 400,
+            }}>
+              {q.question}
+            </div>
+          )}
         </Card>
 
-        {/* Answer area */}
+        {/* MC options */}
         {isMC && (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            {q.options.map((opt, i) => {
+            {(q.options || []).map((opt, i) => {
               const isSelected = selected === i;
               return (
                 <button
@@ -672,8 +811,8 @@ function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic, isHsk }) {
                     {String.fromCharCode(65 + i)}
                   </div>
                   <span style={{
-                    fontFamily: opt.match(/[\u4e00-\u9fff]/) ? "'Noto Serif SC', serif" : "'Helvetica Neue', sans-serif",
-                    fontSize: opt.match(/[\u4e00-\u9fff]/) ? 18 : 15,
+                    fontFamily: String(opt).match(/[\u4e00-\u9fff]/) ? "'Noto Serif SC', serif" : "'Helvetica Neue', sans-serif",
+                    fontSize: String(opt).match(/[\u4e00-\u9fff]/) ? 18 : 15,
                     color: isSelected ? C.paper : C.dim,
                   }}>
                     {opt}
@@ -684,7 +823,8 @@ function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic, isHsk }) {
           </div>
         )}
 
-        {isPinyin && (
+        {/* Text input (pinyin / fill_blank) */}
+        {isTextInput && (
           <div>
             <input
               ref={inputRef}
@@ -692,32 +832,76 @@ function ExamScreen({ levelIndex, onComplete, onBack, isDiagnostic, isHsk }) {
               value={textInput}
               onChange={e => setTextInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Type pinyin here (e.g. nǐ hǎo or ni hao)"
+              placeholder={qType === "fill_blank" ? "Type your answer" : "Type pinyin here (e.g. nǐ hǎo or ni hao)"}
               style={{
                 width: "100%", padding: "16px 18px", borderRadius: 10,
                 border: `1.5px solid ${textInput ? lv.color : C.inkLight}`,
                 background: C.inkLight, color: C.paper,
-                fontFamily: "'Helvetica Neue', sans-serif", fontSize: 16,
-                outline: "none", transition: "border-color 0.15s",
+                fontFamily: qType === "fill_blank" ? "'Noto Serif SC', serif" : "'Helvetica Neue', sans-serif",
+                fontSize: 16, outline: "none", transition: "border-color 0.15s",
+                boxSizing: "border-box",
               }}
             />
+            {qType !== "fill_blank" && (
+              <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, color: C.grey, marginTop: 8, textAlign: "center" }}>
+                Tone marks optional — ni hao = nǐ hǎo
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Reorder word tiles */}
+        {isReorder && (
+          <div>
+            {/* Built sentence area */}
             <div style={{
-              fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11,
-              color: C.grey, marginTop: 8, textAlign: "center",
+              minHeight: 52, background: C.inkLight, borderRadius: 10,
+              border: `1.5px solid ${reorderPicked.length === (q.options || []).length ? lv.color : C.inkLight}`,
+              padding: "10px 12px", marginBottom: 14,
+              display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center",
+              transition: "border-color 0.15s",
             }}>
-              Tone marks optional — ni hao = nǐ hǎo
+              {reorderPicked.length === 0 ? (
+                <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 12, color: C.grey }}>
+                  Tap words below to build your sentence
+                </span>
+              ) : reorderPicked.map((wi, pos) => (
+                <button
+                  key={`p-${pos}-${wi}`}
+                  onClick={() => setReorderPicked(prev => prev.filter((_, p) => p !== pos))}
+                  style={{
+                    background: lv.color + "22", border: `1px solid ${lv.color}60`,
+                    borderRadius: 8, padding: "6px 12px", cursor: "pointer",
+                    fontFamily: "'Noto Serif SC', serif", fontSize: 18, color: C.paper,
+                  }}
+                >
+                  {(q.options || [])[wi]}
+                </button>
+              ))}
+            </div>
+            {/* Available words */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {reorderRemaining.map(wi => (
+                <button
+                  key={`a-${wi}`}
+                  onClick={() => setReorderPicked(prev => [...prev, wi])}
+                  style={{
+                    background: C.inkLight, border: `1px solid ${C.grey}30`,
+                    borderRadius: 8, padding: "8px 14px", cursor: "pointer",
+                    fontFamily: "'Noto Serif SC', serif", fontSize: 18, color: C.dim,
+                  }}
+                >
+                  {(q.options || [])[wi]}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
         {/* Submit */}
         <div style={{ marginTop: 24 }}>
-          <Btn
-            color={lv.color}
-            onClick={submitAnswer}
-            disabled={!canAdvance}
-          >
-            {current + 1 === TOTAL_Q ? "Finish Exam" : "Next →"}
+          <Btn color={lv.color} onClick={submitAnswer} disabled={!canAdvance}>
+            {current + 1 === totalQ ? "Finish Exam" : "Next →"}
           </Btn>
         </div>
       </div>
@@ -809,6 +993,45 @@ function ResultsScreen({ result, onTryNext, onRetry, onHome, onViewSummary, isDi
             </span>
           </div>
         </Card>
+
+        {/* Category breakdown */}
+        {(() => {
+          const cats = ["reading", "grammar", "listening"];
+          const catMeta = {
+            reading:   { label: "📖 Reading",   color: C.blueSoft },
+            grammar:   { label: "📝 Grammar",   color: C.gold },
+            listening: { label: "🔊 Listening", color: C.jadeSoft },
+          };
+          const catData = cats.map(cat => {
+            const qs = answers.filter(a => (a.category || getCategory(questions[a.questionIndex]?.type)) === cat);
+            return { cat, correct: qs.filter(a => a.correct).length, total: qs.length };
+          }).filter(d => d.total > 0);
+          if (catData.length < 2) return null;
+          return (
+            <Card style={{ background: C.inkLight, marginBottom: 20 }}>
+              <div style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 11, textTransform: "uppercase", letterSpacing: 2, color: C.grey, marginBottom: 14 }}>
+                Category Breakdown
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {catData.map(({ cat, correct, total }) => {
+                  const p = pct(correct, total);
+                  const cm = catMeta[cat];
+                  return (
+                    <div key={cat}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 5 }}>
+                        <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, color: C.dim }}>{cm.label}</span>
+                        <span style={{ fontFamily: "'Helvetica Neue', sans-serif", fontSize: 13, fontWeight: 700, color: cm.color }}>
+                          {correct}/{total} · {p}%
+                        </span>
+                      </div>
+                      <ProgressBar value={correct} max={total} color={cm.color} thin />
+                    </div>
+                  );
+                })}
+              </div>
+            </Card>
+          );
+        })()}
 
         {/* Question review */}
         <Card style={{ background: C.inkLight, marginBottom: 24 }}>
