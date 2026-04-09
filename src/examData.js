@@ -341,7 +341,7 @@ const book5B = [
   { type: "hanzi", question: "Select the character for 'shídài' (era/times)", options: ["历史", "时代", "未来", "过去"], answer: 1 },
 ];
 
-// ─── EXPORT ───────────────────────────────────────────────────────────────────
+// ─── EXPORT (ESTC) ────────────────────────────────────────────────────────────
 
 export const EXAMS = {
   intro:  { a: introA,  b: introB  },
@@ -350,4 +350,260 @@ export const EXAMS = {
   book3:  { a: book3A,  b: book3B  },
   book4:  { a: book4A,  b: book4B  },
   book5:  { a: book5A,  b: book5B  },
+};
+
+// ─── HSK LEVEL METADATA ───────────────────────────────────────────────────────
+
+export const HSK_LEVEL_META = [
+  {
+    id: "hsk1",
+    name: "HSK 1",
+    hsk: "150 words",
+    color: "#2563eb",
+    icon: "🟢",
+    description: "Greetings, family, numbers, time, daily activities",
+  },
+  {
+    id: "hsk2",
+    name: "HSK 2",
+    hsk: "300 words",
+    color: "#4f46e5",
+    icon: "🔵",
+    description: "Transport, health, shopping, directions, feelings",
+  },
+  {
+    id: "hsk3",
+    name: "HSK 3",
+    hsk: "600 words",
+    color: "#7c3aed",
+    icon: "🟣",
+    description: "Culture, society, complex sentences, opinion-giving",
+  },
+  {
+    id: "hsk4",
+    name: "HSK 4",
+    hsk: "1200 words",
+    color: "#9333ea",
+    icon: "🔮",
+    description: "Social issues, media, economics, formal grammar",
+  },
+  {
+    id: "hsk5",
+    name: "HSK 5",
+    hsk: "2500 words",
+    color: "#6b7280",
+    icon: "⭐",
+    description: "Advanced reading, formal writing, complex discourse",
+    comingSoon: true,
+  },
+  {
+    id: "hsk6",
+    name: "HSK 6",
+    hsk: "5000 words",
+    color: "#6b7280",
+    icon: "💎",
+    description: "Full proficiency, academic and literary Chinese",
+    comingSoon: true,
+  },
+];
+
+// ─── HSK 1 EXAM ───────────────────────────────────────────────────────────────
+
+const hsk1A = [
+  { type: "match",   question: "What does 水 mean?",                                   options: ["Milk", "Tea", "Water", "Coffee"],                                                answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 今天",                             answer: "jīn tiān" },
+  { type: "hanzi",   question: "Select the character for 'māma' (mother)",              options: ["爸爸", "妈妈", "姐姐", "奶奶"],                                                  answer: 1 },
+  { type: "match",   question: "What does 明天 mean?",                                  options: ["Yesterday", "Today", "Tomorrow", "Next week"],                                  answer: 2 },
+  { type: "translate", question: "How do you say 'I want to drink water'?",             options: ["我想吃饭", "我要喝水", "我喜欢茶", "我不喝咖啡"],                                answer: 1 },
+  { type: "match",   question: "What does 多少钱 mean?",                                options: ["How many people?", "How old are you?", "How much does it cost?", "How far?"],   answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 学习",                             answer: "xué xí" },
+  { type: "hanzi",   question: "Select the character for 'shū' (book)",                 options: ["报纸", "书", "手机", "电脑"],                                                    answer: 1 },
+  { type: "match",   question: "What does 高兴 mean?",                                  options: ["Tired", "Sad", "Happy", "Angry"],                                               answer: 2 },
+  { type: "match",   question: "What does 家 mean?",                                    options: ["School", "Office", "Hospital", "Home / family"],                                answer: 3 },
+  { type: "pinyin",  question: "Type the pinyin for: 医生",                             answer: "yī shēng" },
+  { type: "translate", question: "How do you say 'She is my friend'?",                  options: ["她是我的老师", "她是我的朋友", "她是我的同学", "她是我的妹妹"],                  answer: 1 },
+  { type: "match",   question: "What does 几 mean in 你有几个朋友?",                   options: ["Many", "How many", "A few", "All"],                                              answer: 1 },
+  { type: "hanzi",   question: "Select the character for 'gōng zuò' (work)",            options: ["学习", "工作", "睡觉", "运动"],                                                  answer: 1 },
+  { type: "match",   question: "What does 热 mean?",                                    options: ["Cold", "Warm", "Hot", "Cool"],                                                  answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 苹果",                             answer: "píng guǒ" },
+  { type: "match",   question: "What does 昨天 mean?",                                  options: ["Today", "Yesterday", "Tomorrow", "Last week"],                                  answer: 1 },
+  { type: "translate", question: "How do you say 'Is there a restaurant here?'",        options: ["这里有学校吗？", "这里有医院吗？", "这里有饭店吗？", "这里有银行吗？"],          answer: 2 },
+  { type: "hanzi",   question: "Select the character for 'zuò' (sit)",                  options: ["站", "走", "坐", "跑"],                                                          answer: 2 },
+  { type: "match",   question: "What does 便宜 mean?",                                  options: ["Expensive", "Cheap", "Good quality", "On sale"],                                answer: 1 },
+];
+
+const hsk1B = [
+  { type: "match",   question: "What does 上午 mean?",                                  options: ["Evening", "Afternoon", "Morning", "Midnight"],                                  answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 朋友",                             answer: "péng you" },
+  { type: "hanzi",   question: "Select the character for 'bàba' (father)",              options: ["妈妈", "爸爸", "哥哥", "叔叔"],                                                  answer: 1 },
+  { type: "match",   question: "What does 写 mean?",                                    options: ["Read", "Write", "Speak", "Listen"],                                             answer: 1 },
+  { type: "translate", question: "How do you say 'I am going to school'?",              options: ["我去医院", "我去学校", "我去超市", "我去公司"],                                  answer: 1 },
+  { type: "match",   question: "What does 漂亮 mean?",                                  options: ["Tall", "Smart", "Beautiful", "Kind"],                                           answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 喝水",                             answer: "hē shuǐ" },
+  { type: "hanzi",   question: "Select the character for 'shǒu jī' (mobile phone)",     options: ["电脑", "手机", "电视", "相机"],                                                  answer: 1 },
+  { type: "match",   question: "What does 贵 mean?",                                    options: ["Cheap", "Free", "Expensive", "Affordable"],                                     answer: 2 },
+  { type: "match",   question: "What does 牛奶 mean?",                                  options: ["Coffee", "Tea", "Water", "Milk"],                                               answer: 3 },
+  { type: "pinyin",  question: "Type the pinyin for: 中国",                             answer: "zhōng guó" },
+  { type: "translate", question: "How do you say 'How old are you?'",                   options: ["你叫什么名字？", "你在哪里？", "你多大了？", "你是哪国人？"],                    answer: 2 },
+  { type: "match",   question: "What does 冷 mean?",                                    options: ["Hot", "Warm", "Cool", "Cold"],                                                  answer: 3 },
+  { type: "hanzi",   question: "Select the character for 'chī fàn' (eat a meal)",       options: ["喝水", "吃饭", "睡觉", "工作"],                                                  answer: 1 },
+  { type: "match",   question: "What does 哪里 mean?",                                  options: ["Who", "What", "Where", "When"],                                                 answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 电话",                             answer: "diàn huà" },
+  { type: "match",   question: "What does 太...了 express in 太好了!?",                 options: ["Not quite good", "Just enough", "That's great! (intensifier)", "Maybe good"],   answer: 2 },
+  { type: "translate", question: "How do you say 'I don't have a mobile phone'?",       options: ["我不用手机", "我没有手机", "我不喜欢手机", "我找不到手机"],                      answer: 1 },
+  { type: "hanzi",   question: "Select the character for 'nián' (year)",                options: ["月", "日", "年", "周"],                                                          answer: 2 },
+  { type: "match",   question: "What does 一起 mean?",                                  options: ["Alone", "Sometimes", "Together", "Immediately"],                                answer: 2 },
+];
+
+// ─── HSK 2 EXAM ───────────────────────────────────────────────────────────────
+
+const hsk2A = [
+  { type: "match",   question: "What does 公共汽车 mean?",                              options: ["Taxi", "Subway", "Bus", "Train"],                                               answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 身体",                             answer: "shēn tǐ" },
+  { type: "hanzi",   question: "Select the character for 'yào' (medicine)",             options: ["药", "病", "痛", "医"],                                                          answer: 0 },
+  { type: "match",   question: "What does 晚点 mean?",                                  options: ["Early", "On time", "Late / delayed", "Cancelled"],                              answer: 2 },
+  { type: "translate", question: "How do you say 'I take the subway to work'?",         options: ["我坐公共汽车去上班", "我坐地铁去上班", "我骑自行车去上班", "我开车去上班"],    answer: 1 },
+  { type: "match",   question: "What does 复习 mean?",                                  options: ["Preview", "Review", "Study", "Recite"],                                        answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 附近",                             answer: "fù jìn" },
+  { type: "hanzi",   question: "Select the character for 'wán' (finish / done)",        options: ["开始", "完", "结束", "停"],                                                      answer: 1 },
+  { type: "match",   question: "What does 地图 mean?",                                  options: ["Newspaper", "Map", "Schedule", "Menu"],                                        answer: 1 },
+  { type: "match",   question: "What does 认识 mean?",                                  options: ["Remember", "Understand", "Know (a person)", "Learn"],                           answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 锻炼",                             answer: "duàn liàn" },
+  { type: "translate", question: "How do you say 'Turn left at the traffic light'?",    options: ["在红绿灯右转", "在红绿灯左转", "在路口直走", "在路口停车"],                      answer: 1 },
+  { type: "match",   question: "What does 生气 mean?",                                  options: ["Excited", "Nervous", "Sad", "Angry"],                                           answer: 3 },
+  { type: "hanzi",   question: "Select the character for 'chāo shì' (supermarket)",     options: ["医院", "学校", "超市", "银行"],                                                  answer: 2 },
+  { type: "match",   question: "What does 换 mean?",                                    options: ["Choose", "Buy", "Exchange / change", "Use"],                                    answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 预习",                             answer: "yù xí" },
+  { type: "match",   question: "What does 比较 mean?",                                  options: ["Compare / relatively", "Together", "Always", "Usually"],                        answer: 0 },
+  { type: "translate", question: "How do you say 'I feel a bit unwell today'?",         options: ["我今天身体不太好", "我今天很累了", "我今天有点紧张", "我今天不高兴"],            answer: 0 },
+  { type: "hanzi",   question: "Select the character for 'kuài lè' (joyful)",           options: ["高兴", "快乐", "开心", "幸福"],                                                  answer: 1 },
+  { type: "match",   question: "What does 帮助 mean?",                                  options: ["Forgive", "Support", "Help", "Care for"],                                       answer: 2 },
+];
+
+const hsk2B = [
+  { type: "match",   question: "What does 骑 mean?",                                    options: ["Drive", "Ride (bicycle/horse)", "Walk", "Run"],                                 answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 地铁",                             answer: "dì tiě" },
+  { type: "hanzi",   question: "Select the character for 'wèn tí' (problem/question)",  options: ["回答", "问题", "问候", "话题"],                                                  answer: 1 },
+  { type: "match",   question: "What does 票 mean?",                                    options: ["Money", "Card", "Ticket", "Receipt"],                                           answer: 2 },
+  { type: "translate", question: "How do you say 'How long does it take to get there?'",options: ["到那里多少钱？", "到那里怎么走？", "到那里要多长时间？", "到那里有多远？"],       answer: 2 },
+  { type: "match",   question: "What does 终于 mean?",                                  options: ["Usually", "Still", "Finally", "Again"],                                         answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 感冒",                             answer: "gǎn mào" },
+  { type: "hanzi",   question: "Select the character for 'tíng' (stop / park)",         options: ["走", "跑", "停", "站"],                                                          answer: 2 },
+  { type: "match",   question: "What does 已经 mean?",                                  options: ["Not yet", "Still", "Already", "Soon"],                                          answer: 2 },
+  { type: "match",   question: "What does 方便 mean?",                                  options: ["Expensive", "Convenient", "Necessary", "Possible"],                             answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 小心",                             answer: "xiǎo xīn" },
+  { type: "translate", question: "How do you say 'He has already left'?",               options: ["他还没有走", "他刚走了", "他已经走了", "他要走了"],                              answer: 2 },
+  { type: "match",   question: "What does 小时 mean?",                                  options: ["Minute", "Second", "Hour", "Day"],                                              answer: 2 },
+  { type: "hanzi",   question: "Select the character for 'qì chē' (car)",               options: ["火车", "汽车", "飞机", "轮船"],                                                  answer: 1 },
+  { type: "match",   question: "What does 或者 mean?",                                  options: ["And", "But", "Or", "Because"],                                                  answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 关系",                             answer: "guān xi" },
+  { type: "match",   question: "What does 其实 mean?",                                  options: ["Suddenly", "Actually / in fact", "Of course", "Especially"],                    answer: 1 },
+  { type: "translate", question: "How do you say 'I ride a bicycle to school'?",        options: ["我走路去学校", "我坐地铁去学校", "我骑自行车去学校", "我开车去学校"],            answer: 2 },
+  { type: "hanzi",   question: "Select the character for 'xìng fú' (happiness)",        options: ["快乐", "高兴", "幸福", "开心"],                                                  answer: 2 },
+  { type: "match",   question: "What does 安静 mean?",                                  options: ["Noisy", "Busy", "Quiet", "Crowded"],                                            answer: 2 },
+];
+
+// ─── HSK 3 EXAM ───────────────────────────────────────────────────────────────
+
+const hsk3A = [
+  { type: "match",   question: "What does 虽然...但是 express?",                        options: ["Cause and effect", "Concession (although...but)", "Condition", "Sequence"],     answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 环境",                             answer: "huán jìng" },
+  { type: "hanzi",   question: "Select the character for 'jīng jì' (economy)",          options: ["政治", "文化", "经济", "历史"],                                                  answer: 2 },
+  { type: "match",   question: "What does 继续 mean?",                                  options: ["Stop", "Start again", "Continue", "Finish"],                                    answer: 2 },
+  { type: "translate", question: "How do you say 'Although it's expensive, I still want to buy it'?", options: ["因为很贵，我不买了", "虽然很贵，但我还是想买", "既然很贵，就别买了", "因为我想买，所以很贵"], answer: 1 },
+  { type: "match",   question: "What does 影响 mean?",                                  options: ["Decision", "Result", "Influence / affect", "Change"],                           answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 感情",                             answer: "gǎn qíng" },
+  { type: "hanzi",   question: "Select the character for 'shèhuì' (society)",           options: ["社区", "社会", "社交", "社团"],                                                  answer: 1 },
+  { type: "match",   question: "What does 认为 mean?",                                  options: ["Know", "Think / believe", "Feel", "Understand"],                                answer: 1 },
+  { type: "match",   question: "What does 发展 mean?",                                  options: ["Research", "Progress", "Develop / development", "Improve"],                     answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 文化",                             answer: "wén huà" },
+  { type: "translate", question: "How do you say 'I think this movie is very interesting'?", options: ["这部电影很有意思", "我认为这部电影很有意思", "我觉得电影有点无聊", "这部电影太长了"], answer: 1 },
+  { type: "match",   question: "What does 解释 mean?",                                  options: ["Translate", "Explain", "Describe", "Define"],                                   answer: 1 },
+  { type: "hanzi",   question: "Select the character for 'gù shi' (story)",             options: ["历史", "故事", "小说", "报道"],                                                  answer: 1 },
+  { type: "match",   question: "What does 一直 mean?",                                  options: ["Immediately", "All along / continuously", "Eventually", "Sometimes"],           answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 选择",                             answer: "xuǎn zé" },
+  { type: "match",   question: "What does 千万 convey in a warning?",                   options: ["Thousands of times", "By all means / definitely (don't)", "A little bit", "Immediately"], answer: 1 },
+  { type: "translate", question: "How do you say 'She has been working here for three years'?", options: ["她在这里工作了三年", "她三年前在这里工作", "她将要在这里工作三年", "她在这里工作着三年"], answer: 0 },
+  { type: "hanzi",   question: "Select the character for 'jué dìng' (decide)",          options: ["选择", "决定", "判断", "确定"],                                                  answer: 1 },
+  { type: "match",   question: "What does 对...来说 mean?",                             options: ["Due to", "According to", "For / from the perspective of", "In comparison to"],  answer: 2 },
+];
+
+const hsk3B = [
+  { type: "match",   question: "What does 了解 mean?",                                  options: ["Like", "Study", "Understand in depth / know well", "Experience"],               answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 态度",                             answer: "tài du" },
+  { type: "hanzi",   question: "Select the character for 'guān zhù' (follow / pay attention to)", options: ["注意", "关注", "留意", "观察"],                                       answer: 1 },
+  { type: "match",   question: "What does 方面 mean?",                                  options: ["Direction", "Method", "Aspect / area", "Level"],                                answer: 2 },
+  { type: "translate", question: "How do you say 'As long as you work hard, you'll succeed'?", options: ["只有努力工作，才能成功", "只要努力工作，就能成功", "因为努力工作，所以成功了", "虽然努力工作，但没成功"], answer: 1 },
+  { type: "match",   question: "What does 互相 mean?",                                  options: ["Together", "Each other / mutual", "Alone", "Sometimes"],                        answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 目的",                             answer: "mù dì" },
+  { type: "hanzi",   question: "Select the character for 'yuán yīn' (reason/cause)",    options: ["结果", "原因", "目的", "方法"],                                                  answer: 1 },
+  { type: "match",   question: "What does 严格 mean?",                                  options: ["Relaxed", "Strict", "Gentle", "Fair"],                                          answer: 1 },
+  { type: "match",   question: "What does 积极 mean?",                                  options: ["Negative", "Active / positive / enthusiastic", "Passive", "Neutral"],           answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 希望",                             answer: "xī wàng" },
+  { type: "translate", question: "How do you say 'This problem is not easy to solve'?", options: ["这个问题很重要", "这个问题不容易解决", "这个问题已经解决了", "这个问题非常有意思"], answer: 1 },
+  { type: "match",   question: "What does 机会 mean?",                                  options: ["Risk", "Challenge", "Opportunity / chance", "Competition"],                     answer: 2 },
+  { type: "hanzi",   question: "Select the character for 'tè bié' (especially/special)", options: ["非常", "特别", "格外", "十分"],                                                 answer: 1 },
+  { type: "match",   question: "What does 表示 mean?",                                  options: ["Understand", "Indicate / express / represent", "Confirm", "Reject"],            answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 危险",                             answer: "wēi xiǎn" },
+  { type: "match",   question: "What does 受到 mean?",                                  options: ["Give", "Receive / be subject to", "Refuse", "Avoid"],                           answer: 1 },
+  { type: "translate", question: "How do you say 'He not only speaks Chinese but also Japanese'?", options: ["他只会说汉语", "他不仅会说汉语，还会说日语", "他虽然会说汉语，但不会说日语", "他想学汉语和日语"], answer: 1 },
+  { type: "hanzi",   question: "Select the character for 'shí jiān' (time/duration)",   options: ["时候", "时间", "时刻", "时代"],                                                  answer: 1 },
+  { type: "match",   question: "What does 只要...就 express?",                          options: ["Only if (necessary condition)", "As long as (sufficient condition)", "Although...still", "Because...so"], answer: 1 },
+];
+
+// ─── HSK 4 EXAM ───────────────────────────────────────────────────────────────
+
+const hsk4A = [
+  { type: "match",   question: "What does 逐渐 mean?",                                  options: ["Suddenly", "Gradually", "Immediately", "Temporarily"],                          answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 经济",                             answer: "jīng jì" },
+  { type: "hanzi",   question: "Select the character for 'zhèng cè' (policy)",          options: ["制度", "政策", "法律", "规定"],                                                  answer: 1 },
+  { type: "match",   question: "What does 不仅...而且 express?",                        options: ["Either...or", "Not only...but also", "Although...but", "If...then"],            answer: 1 },
+  { type: "translate", question: "How do you say 'This policy not only solves unemployment but also improves the social environment'?", options: ["这项政策解决了很多问题", "这项政策不仅解决了失业问题，而且改善了社会环境", "这项政策很重要，需要继续执行", "这项政策虽然好，但实施困难"], answer: 1 },
+  { type: "match",   question: "What does 随着 mean?",                                  options: ["Along with / as (something changes)", "Because of", "In spite of", "Before"],   answer: 0 },
+  { type: "pinyin",  question: "Type the pinyin for: 竞争",                             answer: "jìng zhēng" },
+  { type: "hanzi",   question: "Select the character for 'yǐng xiǎng' (influence)",     options: ["影响", "影子", "效果", "作用"],                                                  answer: 0 },
+  { type: "match",   question: "What does 既然...就 express?",                          options: ["A purpose", "A concession", "A logical conclusion from a known fact", "A sequence"], answer: 2 },
+  { type: "match",   question: "What does 通过 mean?",                                  options: ["Against", "Through / by means of", "Without", "Despite"],                       answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 责任",                             answer: "zé rèn" },
+  { type: "translate", question: "How do you say 'As globalization develops, cultural exchange becomes more important'?", options: ["全球化对文化交流有影响", "随着全球化的发展，文化交流变得越来越重要", "因为全球化，文化交流变少了", "全球化使文化交流更加困难"], answer: 1 },
+  { type: "match",   question: "What does 承认 mean?",                                  options: ["Deny", "Ignore", "Admit / acknowledge", "Forget"],                              answer: 2 },
+  { type: "hanzi",   question: "Select the character for 'quán lì' (right/entitlement)", options: ["权力", "权利", "力量", "利益"],                                                 answer: 1 },
+  { type: "match",   question: "What does 由于 mean?",                                  options: ["In order to", "Due to / because of (formal)", "Although", "No matter"],         answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 观点",                             answer: "guān diǎn" },
+  { type: "match",   question: "What does 对...来说 mean?",                             options: ["Due to", "For / from the perspective of", "According to", "Through"],           answer: 1 },
+  { type: "translate", question: "How do you say 'Due to a lack of motivation, his efficiency decreased greatly'?", options: ["由于缺乏动机，他的效率大大降低了", "因为他不喜欢工作，效率变低了", "他很懒，所以效率不高", "他的效率很低，因为任务太难了"], answer: 0 },
+  { type: "hanzi",   question: "Select the character for 'chéng jiù' (achievement)",    options: ["成功", "成就", "结果", "目标"],                                                  answer: 1 },
+  { type: "match",   question: "What does 与...相比 mean?",                             options: ["Together with", "Compared with", "In addition to", "Except for"],               answer: 1 },
+];
+
+const hsk4B = [
+  { type: "match",   question: "What does 越来越 indicate?",                            options: ["A sudden change", "A progressive change (more and more)", "A comparison", "A condition"], answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 道德",                             answer: "dào dé" },
+  { type: "hanzi",   question: "Select the character for 'wū rǎn' (pollution)",         options: ["污水", "污染", "废物", "排放"],                                                  answer: 1 },
+  { type: "match",   question: "What does 从...角度来看 mean?",                         options: ["From the perspective of", "According to the result", "In terms of the method", "Due to the angle"], answer: 0 },
+  { type: "translate", question: "How do you say 'From a moral perspective, this behavior is wrong'?", options: ["从法律角度来看，这个行为是违法的", "从道德角度来看，这个行为是不对的", "从经济角度来看，这个行为是有利的", "从科学角度来看，这个行为是合理的"], answer: 1 },
+  { type: "match",   question: "What does 受...影响 mean?",                             options: ["Cause influence on others", "Be affected by", "Influence others", "Resist influence"], answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 条约",                             answer: "tiáo yuē" },
+  { type: "hanzi",   question: "Select the character for 'hé píng' (peace)",            options: ["安全", "和平", "和谐", "稳定"],                                                  answer: 1 },
+  { type: "match",   question: "What does 为了 mean?",                                  options: ["Because", "In order to / for the purpose of", "Although", "However"],           answer: 1 },
+  { type: "match",   question: "What does 在...方面 express?",                          options: ["The time of an event", "The location of an event", "The scope / domain of discussion", "The reason for an event"], answer: 2 },
+  { type: "pinyin",  question: "Type the pinyin for: 价值观",                           answer: "jià zhí guān" },
+  { type: "translate", question: "How do you say 'Compared with last year, this year's economic growth is noticeably faster'?", options: ["今年和去年的经济增长差不多", "与去年相比，今年的经济增长速度明显加快", "今年的经济比去年好一点", "去年的经济增长比今年快"], answer: 1 },
+  { type: "match",   question: "What does 有权 mean?",                                  options: ["Have power over others", "Have the right to", "Have authority", "Have influence"], answer: 1 },
+  { type: "hanzi",   question: "Select the character for 'kě chí xù' (sustainable)",   options: ["可利用", "可持续", "可发展", "可再生"],                                           answer: 1 },
+  { type: "match",   question: "What does 既...又 express?",                            options: ["Either...or", "Both...and", "Not...nor", "Although...but"],                      answer: 1 },
+  { type: "pinyin",  question: "Type the pinyin for: 创新",                             answer: "chuàng xīn" },
+  { type: "match",   question: "What does 对...造成危害 mean?",                         options: ["Benefit from", "Cause harm to", "Prevent harm to", "Study the effects on"],       answer: 1 },
+  { type: "translate", question: "How do you say 'With the help of new technology, surgical risks are decreasing'?", options: ["新技术让手术变得更复杂", "在新技术的帮助下，手术的风险越来越低", "因为手术技术进步，风险有所减少", "手术技术虽然先进，风险还是很高"], answer: 1 },
+  { type: "hanzi",   question: "Select the character for 'wài jiāo' (diplomacy)",       options: ["外交", "外国", "外资", "外贸"],                                                  answer: 0 },
+  { type: "match",   question: "What does 随着时间的推移 mean?",                        options: ["At the right time", "As time passes / over time", "Before the deadline", "In modern times"], answer: 1 },
+];
+
+// ─── HSK EXPORT ───────────────────────────────────────────────────────────────
+
+export const HSK_EXAMS = {
+  hsk1: { a: hsk1A, b: hsk1B },
+  hsk2: { a: hsk2A, b: hsk2B },
+  hsk3: { a: hsk3A, b: hsk3B },
+  hsk4: { a: hsk4A, b: hsk4B },
 };
